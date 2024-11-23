@@ -1,8 +1,6 @@
-import chalk from "chalk";
 import { App } from "octokit";
 import { Config } from "./config.js";
 import { getInstallationId } from "./utils.js";
-import { error } from "console";
 import { printExperimentResult } from "./pretty-output.js";
 
 export interface InputContext {
