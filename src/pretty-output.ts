@@ -13,11 +13,22 @@ export const notOkStatus = chalk.white.bold.bgRed(padStatus("FAIL"));
 export const unknownStatus = chalk.black.bold.bgYellowBright(padStatus("????"));
 
 export function printExperimentResult(
+  ctx: {
+    config: {
+      owner: string;
+      repo: string;
+    };
+  },
   experiment: Experiment,
   result:
     | { type: "error"; error: unknown }
-    | { type: "ok"; verification?: { verified: boolean; reason: string } }
+    | {
+        type: "ok";
+        commit: string;
+        verification?: { verified: boolean; reason: string };
+      }
 ) {
+  const { config } = ctx;
   let reason;
   let status;
   if (result.type === "error") {
@@ -42,4 +53,13 @@ export function printExperimentResult(
   }
 
   console.log(`${status} ${experiment.name} -> ${reason}`);
+  if (result.type === "ok") {
+    const details = [
+      `Web: https://github.com/${config.owner}/${config.repo}/commit/${result.commit}`,
+      `Api: https://api.github.com/repos/${config.owner}/${config.repo}/commits/${result.commit}`,
+    ];
+    for (const detail of details) {
+      console.log(`${" ".repeat(STATUS_WIDTH)} ${detail}`);
+    }
+  }
 }

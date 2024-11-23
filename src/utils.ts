@@ -1,4 +1,5 @@
 import { Octokit, type App } from "octokit";
+import { ExperimentContext } from "./runner.js";
 
 export async function getInstallationId(
   ghApp: InstanceType<typeof App>,
@@ -21,23 +22,32 @@ export async function getInstallationId(
 }
 
 export async function createExperimentBranch(
-  octokit: Octokit,
-  owner: string,
-  repo: string
+  { config, branch }: ExperimentContext,
+  octokit: Octokit
 ) {
-  const branch = `experiments/${new Date().getTime()}`;
   const mainBranchRes = await octokit.rest.repos.getBranch({
-    owner,
-    repo,
+    owner: config.owner,
+    repo: config.repo,
     branch: "main",
   });
 
   const res = await octokit.rest.git.createRef({
-    owner,
-    repo,
+    owner: config.owner,
+    repo: config.repo,
     ref: `refs/heads/${branch}`,
     sha: mainBranchRes.data.commit.sha,
   });
 
   return { branch, res };
+}
+
+export async function getPerfectMatchAuthor(octokit: Octokit) {
+  const app = await octokit.request("GET /app");
+  const name = `${app.data?.slug}[bot]`;
+  const user = await octokit.rest.users.getByUsername({ username: name });
+
+  return {
+    name,
+    email: `${user.data.id}+${name}@users.noreply.github.com`,
+  };
 }

@@ -8,18 +8,34 @@ export interface InputContext {
   ghApp: InstanceType<typeof App>;
 }
 
-export interface ExperimentContext extends InputContext {}
+export interface ExperimentContext extends InputContext {
+  branch: string;
+}
 
 export interface Experiment {
   name: string;
   run: (ctx: ExperimentContext) => Promise<string>;
 }
 
-export async function runExperiment(ctx: InputContext, experiment: Experiment) {
+export async function runExperiment(
+  inputCtx: InputContext,
+  experiment: Experiment
+) {
+  const slug = experiment.name
+    .replaceAll(/[^A-Za-z0-9]/g, "-")
+    .replaceAll(/-+/g, "-")
+    .toLowerCase();
+  const branch = `experiments/${slug}/${new Date().getTime()}`;
+
+  const ctx = {
+    ...inputCtx,
+    branch,
+  };
+
   try {
     const commit = await experiment.run(ctx);
 
-    const { ghApp, config } = ctx;
+    const { ghApp, config } = inputCtx;
     const octokit = await ghApp.getInstallationOctokit(
       await getInstallationId(ghApp, config.owner)
     );
@@ -30,11 +46,12 @@ export async function runExperiment(ctx: InputContext, experiment: Experiment) {
       ref: commit,
     });
 
-    printExperimentResult(experiment, {
+    printExperimentResult(ctx, experiment, {
       type: "ok",
+      commit,
       verification: res.data.commit.verification,
     });
   } catch (error) {
-    printExperimentResult(experiment, { type: "error", error });
+    printExperimentResult(ctx, experiment, { type: "error", error });
   }
 }
