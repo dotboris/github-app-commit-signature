@@ -5,8 +5,9 @@ export const appUsingApiExperiments: Experiment[] = [
   {
     name: "App using API: create file (no author, no committer)",
     run: async ({ ghApp, config }) => {
-      const installationId = await getInstallationId(ghApp, config.owner);
-      const octokit = await ghApp.getInstallationOctokit(installationId);
+      const octokit = await ghApp.getInstallationOctokit(
+        await getInstallationId(ghApp, config.owner)
+      );
 
       const { branch } = await createExperimentBranch(
         octokit,
