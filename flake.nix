@@ -16,7 +16,8 @@
 
       devShells.default = pkgs.mkShell {
         packages = [
-          pkgs.deno
+          pkgs.nodejs_22
+          pkgs.corepack
         ];
       };
     });
